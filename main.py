@@ -162,7 +162,7 @@ class SceneMain():
         pyxel.text(10,10, t, 7)
 
         t = "X: Jump   R: Retire"
-        pyxel.text(g.SCREEN_WIDTH - len(t)*5,10, t, 7)
+        pyxel.text(g.SCREEN_WIDTH - len(t)*5, g.SCREEN_HEIGHT-8, t, 7)
 
 if __name__ == "__main__":
     g.game_main()

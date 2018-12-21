@@ -13,20 +13,41 @@ H = 3
 class SceneTitle():
     def __init__(self, p):
         self.color_counter = 0
+
+        self.menu_selection = 0
+        self.menu_count = 1
+        if g.game.input.replay_record:
+            self.menu_count += 1
+
     def update(self):
         if g.game.input.btnp(g.InputKey.A):
-            g.game.game_start()
+            g.game.game_start(False if self.menu_selection == 0 else True)
+        if g.game.input.btnp(g.InputKey.UP) or g.game.input.btnp(g.InputKey.DOWN):
+            self.menu_selection = (self.menu_selection + 1) % self.menu_count
 
     def draw(self):
         self.color_counter += 1
 
         g.draw_center_x(
-            "TITLE",
-            g.SCREEN_HEIGHT/2-40,
+            "GAME TITLE",
+            20,
             self.color_counter%16)
+
+        menu = [
+            "PLAY",
+            "REPLAY"
+        ]
+        for n in range(self.menu_count):
+            c = 4 if self.menu_selection == n else 7
+
+            g.draw_center_x(
+                menu[n],
+                80+8*n,
+                c)
+
         g.draw_center_x(
-            "HIT X Key",
-            g.SCREEN_HEIGHT/2+16,
+            "HIT X KEY",
+            g.SCREEN_HEIGHT-8,
             7)
 
 class SceneStageSelect():
@@ -76,7 +97,7 @@ class SceneStageSelect():
                 c)
 
         g.draw_center_x(
-            "HIT X Key to Select Stage",
+            "HIT X KEY",
             g.SCREEN_HEIGHT-8,
             7)
 
@@ -89,12 +110,12 @@ class SceneEnd():
 
     def draw(self):
         g.draw_center_x(
-            "TotalScore: %d" %(g.game.score),
+            "TOTAL SCORE: %d" %(g.game.score),
             g.SCREEN_HEIGHT/2-40,
             8)
         g.draw_center_x(
-            "HIT X Key",
-            g.SCREEN_HEIGHT/2+16,
+            "HIT X KEY",
+            g.SCREEN_HEIGHT-8,
             7)
 
 

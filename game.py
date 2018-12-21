@@ -163,6 +163,13 @@ class Input:
         self.current_keys = [False] * InputKey.COUNT.value
         self.pref_keys = [False] * InputKey.COUNT.value
 
+        self.record = []
+        self.recoding = False
+
+        self.replaying = False
+        self.replay_counter = 0
+        self.replay_record = None
+
     def update(self):
         self.pref_keys = self.current_keys[:]
 
@@ -177,8 +184,63 @@ class Input:
         for key, value in key_check.items():
             self.current_keys[key.value] = pyxel.btn(value)
 
+        if self.recoding:
+            code = 0
+            for n in range(InputKey.COUNT.value):
+                if self.current_keys[n]:
+                    code += pow(2, n)
+            self.record.append(code)
+
+        if self.replaying:
+            if len(self.replay_record) > self.replay_counter:
+                code = self.replay_record[self.replay_counter]
+                for n in range(InputKey.COUNT.value):
+                    self.current_keys[n] = True if (code & pow(2, n)) else False
+
+            self.replay_counter += 1
+
+
     def draw(self):
-        pass
+        X = SCREEN_WIDTH - 15
+        Y = 2
+
+        LINES = [
+            [2,0,2,1],
+            [2,3,2,4],
+            [0,2,1,2],
+            [3,2,4,2],
+            [8,3,8,4],
+            [6,3,6,4],
+        ]
+
+        for n in range(InputKey.COUNT.value):
+            c = 8 if self.current_keys[n] else 6
+            p = LINES[n]
+
+            pyxel.line(X+p[0], Y+p[1], 
+                X+p[2], Y+p[3], 
+                c
+            )
+
+        if self.replaying:
+            t = "REPLAY"
+            draw_center_x(t, SCREEN_HEIGHT/2, 8)
+
+    def game_start(self, replay):
+        if replay:
+            self.recoding = False
+            self.replaying = True
+        else:
+            self.recoding = True
+            self.record = []
+            self.replaying = False
+
+    def game_end(self):
+        if self.recoding:
+            self.recoding = False
+            self.replay_record = self.record[:]
+        if self.replaying:
+            self.replaying = False
 
     def btn(self, key):
         return self.current_keys[key.value]        
@@ -249,11 +311,14 @@ class Game:
                 self.score)
             pyxel.text(10,3, t, 7)
 
+        self.input.draw()
+
     def move_scene(self, next_mode, next_param):
         self.next_mode = next_mode
         self.next_param = next_param
 
-    def game_start(self):
+    # ゲーム開始
+    def game_start(self, replay):
         self.coins = 0
         self.score = 0
         self.stages = [False] * STAGE_NUM
@@ -261,8 +326,11 @@ class Game:
 
         self.move_scene(GameMode.STAGE, {})
 
+        self.input.game_start(replay)
+
     def game_end(self):
         self.move_scene(GameMode.END, {})
+        self.input.game_end()
 
     def stage_start(self, stage):
         self.coins = 0
