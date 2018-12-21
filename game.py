@@ -149,6 +149,42 @@ class GameMode(Enum):
     STAGE = 2
     END = 3
 
+class InputKey(Enum):
+    UP = 0
+    DOWN = 1
+    LEFT = 2
+    RIGHT = 3
+    A = 4
+    B = 5
+    COUNT = 6
+
+class Input:
+    def __init__(self):
+        self.current_keys = [False] * InputKey.COUNT.value
+        self.pref_keys = [False] * InputKey.COUNT.value
+
+    def update(self):
+        self.pref_keys = self.current_keys[:]
+
+        key_check = {
+            InputKey.UP: pyxel.KEY_UP,
+            InputKey.DOWN: pyxel.KEY_DOWN,
+            InputKey.LEFT: pyxel.KEY_LEFT,
+            InputKey.RIGHT: pyxel.KEY_RIGHT,
+            InputKey.A: pyxel.KEY_X,
+            InputKey.B: pyxel.KEY_R,
+        }
+        for key, value in key_check.items():
+            self.current_keys[key.value] = pyxel.btn(value)
+
+    def draw(self):
+        pass
+
+    def btn(self, key):
+        return self.current_keys[key.value]        
+
+    def btnp(self, key):
+        return self.current_keys[key.value] and not self.pref_keys[key.value]  
 
 class Game:
     def __init__(self):
@@ -166,10 +202,14 @@ class Game:
         self.next_mode = GameMode.TITLE
         self.next_param = {}
 
+        self.input = Input()
+
     def run(self):
         pyxel.run(self.update, self.draw)
 
     def update(self):
+        self.input.update()
+
         if pyxel.btnp(pyxel.KEY_Q):
             pyxel.quit()
 
@@ -182,7 +222,7 @@ class Game:
             self.timecount -= (1000/TARGET_FPS)
             if self.timecount <= 0:
                 self.game_end()
-                
+
     def goto_next_mode(self):
         next_scenes = {
             GameMode.TITLE: scenes.SceneTitle,

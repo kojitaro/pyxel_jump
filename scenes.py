@@ -14,7 +14,7 @@ class SceneTitle():
     def __init__(self, p):
         self.color_counter = 0
     def update(self):
-        if pyxel.btnp(pyxel.KEY_X):
+        if g.game.input.btnp(g.InputKey.A):
             g.game.game_start()
 
     def draw(self):
@@ -37,20 +37,18 @@ class SceneStageSelect():
         sx = int(self.selection % W)
         sy = int(self.selection / W)
 
-        HOLD = 10
-        PERIOD = 5
-        if pyxel.btnp(pyxel.KEY_LEFT):
+        if g.game.input.btnp(g.InputKey.LEFT):
             sx -= 1
-        if pyxel.btnp(pyxel.KEY_RIGHT):
+        if g.game.input.btnp(g.InputKey.RIGHT):
             sx += 1
-        if pyxel.btnp(pyxel.KEY_UP):
+        if g.game.input.btnp(g.InputKey.UP):
             sy -= 1
-        if pyxel.btnp(pyxel.KEY_DOWN):
+        if g.game.input.btnp(g.InputKey.DOWN):
             sy += 1
 
         self.selection = (sx+W)%W + ((sy+H)%H)*W
 
-        if pyxel.btnp(pyxel.KEY_X):
+        if g.game.input.btnp(g.InputKey.A):
             g.game.stage_start(self.selection)
 
     def draw(self):
@@ -86,7 +84,7 @@ class SceneEnd():
     def __init__(self, p):
         self.color_counter = 0
     def update(self):
-        if pyxel.btnp(pyxel.KEY_X):
+        if g.game.input.btnp(g.InputKey.A):
             g.game.move_scene(g.GameMode.TITLE,{})
 
     def draw(self):

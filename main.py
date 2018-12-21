@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import random
 import math
@@ -21,16 +20,16 @@ class Player():
 
     def update(self):
         x = 0
-        if pyxel.btn(pyxel.KEY_LEFT):
+        if g.game.input.btn(g.InputKey.LEFT):
             x = -5
             self.walk_counter += 1
-        elif pyxel.btn(pyxel.KEY_RIGHT):
+        elif g.game.input.btn(g.InputKey.RIGHT):
             x = 5
             self.walk_counter += 1
 
         self.body.linearVelocity = (x, self.body.linearVelocity[1])
         if self.body.linearVelocity[1] == 0:
-            if pyxel.btn(pyxel.KEY_X) :
+            if g.game.input.btn(g.InputKey.A) :
                 self.body.linearVelocity = (self.body.linearVelocity[0], 7)
         else:
             self.walk_counter = 0
@@ -49,7 +48,7 @@ class Player():
             g.set_body_pos(self.body, self.first_pos)
             self.hit = False
 
-        if pyxel.btn(pyxel.KEY_R) :
+        if g.game.input.btn(g.InputKey.B) :
             g.game.move_scene(g.GameMode.STAGE,{})
     def draw(self):
         if g.DEBUG_DRAW:
@@ -67,7 +66,7 @@ class GroundGenerator:
         while True:
             n = random.randint(0, self.w*self.h-1)
             if self.items[n]:
-                next
+                continue
             self.items[n] = True
 
             return (g.PLAYER_SCROLL_X_M+2 + int(n % self.w),
@@ -163,7 +162,7 @@ class SceneMain():
         pyxel.text(10,10, t, 7)
 
         t = "X: Jump   R: Retire"
-        pyxel.text(g.SCREEN_WIDTH - len(t)*8,10, t, 7)
+        pyxel.text(g.SCREEN_WIDTH - len(t)*5,10, t, 7)
 
 if __name__ == "__main__":
     g.game_main()
