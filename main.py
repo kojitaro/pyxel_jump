@@ -8,17 +8,9 @@ from Box2D import b2
 
 import game as g
 
-# class GameMange:
-#     def __init__(self):
-#         self.coins = 0
-#         self.stages = [False] * g.STAGE_NUM
-    
-#     def 
 
-
-class Player(g.GContainer):
+class Player():
     def __init__(self, world):
-        super().__init__()
         self.walk_counter = 0
 
         self.first_pos = (2,4)
@@ -28,8 +20,6 @@ class Player(g.GContainer):
         self.body.CreateCircleFixture(radius=0.45, density=1, friction=0.3)
 
     def update(self):
-        super().update()
-
         x = 0
         if pyxel.btn(pyxel.KEY_LEFT):
             x = -5
@@ -49,7 +39,9 @@ class Player(g.GContainer):
         if pos[1] < -10:
             self.hit = True
         if pos[0] >= g.STAGE_WIDTH_M:
-            self.hit = True
+            # クリア
+            g.game.stage_end()
+            return
 
         if self.hit:
             #  落ちた
@@ -57,12 +49,9 @@ class Player(g.GContainer):
             g.set_body_pos(self.body, self.first_pos)
             self.hit = False
 
-        
-
-
+        if pyxel.btn(pyxel.KEY_R) :
+            g.game.move_scene(g.GameMode.STAGE,{})
     def draw(self):
-        super().draw()
-
         if g.DEBUG_DRAW:
             g.draw_body(self.body, 8)
         g.draw_body_sprite(self.body, g.SpriteSet.PLAYER.value+int(self.walk_counter/4)%2)
@@ -86,7 +75,7 @@ class GroundGenerator:
             
 
 
-class Ground(g.GContainer):
+class Ground():
     def __init__(self, world, generator):
         super().__init__()
 
@@ -123,6 +112,7 @@ class Ground(g.GContainer):
         for s in self.coins[:]:
             d = math.sqrt((pb[0]-s[0])*(pb[0]-s[0])+(pb[1]-s[1])*(pb[1]-s[1]))
             if d <= 0.8:
+                g.game.get_coin()
                 self.coins.remove(s)
 
         for s in self.traps[:]:
@@ -131,7 +121,6 @@ class Ground(g.GContainer):
                 player.hit = True
 
     def draw(self):
-        super().draw()
 
         # 地面を描画
         for body in self.bodys:
@@ -147,14 +136,11 @@ class Ground(g.GContainer):
         # わなを描画
         for trap in self.traps:
             g.draw_sprite_world(trap, g.SpriteSet.TRAP)
-            
 
-
-
-
-class SceneMain(g.Scene):
-    def __init__(self):
-        generator = GroundGenerator(0)
+class SceneMain():
+    def __init__(self, params):
+        self.params = params
+        generator = GroundGenerator(params["stage"])
 
         self.world = b2.world(gravity=(0, -10), doSleep=True)
         self.player = Player(self.world)
@@ -166,8 +152,6 @@ class SceneMain(g.Scene):
         self.player.update()
 
     def draw(self):
-        pyxel.text(0,0,"00:00", 7)
-
         # 描画のオフセットを計算
         pos = g.body_pos(self.player.body)
         g.set_draw_offset_x_m( min(0, g.PLAYER_SCROLL_X_M-pos[0]))
@@ -175,25 +159,11 @@ class SceneMain(g.Scene):
         self.player.draw()
         self.ground.draw()
 
-class Game:
-    def __init__(self):
-        pyxel.init(g.SCREEN_WIDTH, g.SCREEN_HEIGHT)
-        pyxel.load(os.path.join(os.path.dirname(__file__), "main.pyxel"))
+        t = "  STAGE:%02d COIN:%02d" %(self.params["stage"]+1, g.game.coins)
+        pyxel.text(10,10, t, 7)
 
-        self.scene = SceneMain()
-
-        pyxel.run(self.update, self.draw)
-
-    def update(self):
-        if pyxel.btnp(pyxel.KEY_Q):
-            pyxel.quit()
-        self.scene.update()
-
-    def draw(self):
-        pyxel.cls(0)
-        self.scene.draw()
-
-
+        t = "X: Jump   R: Retire"
+        pyxel.text(g.SCREEN_WIDTH - len(t)*8,10, t, 7)
 
 if __name__ == "__main__":
-    game = Game()
+    g.game_main()

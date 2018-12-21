@@ -1,8 +1,12 @@
+import os
+from enum import Enum
+
 import pyxel
 import Box2D
 from Box2D import b2
 
-from enum import Enum
+import main
+import scenes
 
 PPM = 16.0  # pixels per meter
 TARGET_FPS = 30
@@ -15,10 +19,10 @@ STAGE_ITEMEND_X_M = 67  # ここまでしかものが置かない
 SCREEN_WIDTH_M = int(SCREEN_WIDTH/PPM)
 SCREEN_HIGHT_M = int(SCREEN_HEIGHT/PPM)
 
-DEBUG_DRAW=True
+DEBUG_DRAW=False
 
-STAGE_NUM = 10
-
+STAGE_NUM = 12
+GAME_TIMEOUT_S = 60 # 秒
 
 # プレイヤーの移動の起点
 PLAYER_SCROLL_X_M = 3
@@ -132,51 +136,112 @@ def draw_body(body, color):
 #            print(pos)
             pyxel.circb(pos[0] + DRAW_OFFSET_X, pos[1], int(fixture.shape.radius*PPM), color)
 
+def draw_center_x(text, y, color):
+    w = len(text)*5
+    pyxel.text(int((SCREEN_WIDTH-w)/2),
+        y,
+        text,
+        color)
+
+class GameMode(Enum):
+    TITLE = 0
+    MAIN = 1
+    STAGE = 2
+    END = 3
 
 
-
-class GObject:
+class Game:
     def __init__(self):
-        self.parent = None
+        pyxel.init(SCREEN_WIDTH, SCREEN_HEIGHT)
+        pyxel.load(os.path.join(os.path.dirname(__file__), "main.pyxel"))
+
+
+        self.mode = GameMode.TITLE
+        self.coins = 0
+        self.score = 0
+        self.stage = 0
+        self.stages = [False] * STAGE_NUM
+        self.timecount = 1000*GAME_TIMEOUT_S
+
+        self.next_mode = GameMode.TITLE
+        self.next_param = {}
+
+    def run(self):
+        pyxel.run(self.update, self.draw)
 
     def update(self):
-        pass
-    
+        if pyxel.btnp(pyxel.KEY_Q):
+            pyxel.quit()
+
+        if self.next_mode:
+            self.goto_next_mode()
+
+        self.scene.update()
+
+        if self.is_gaming():
+            self.timecount -= (1000/TARGET_FPS)
+            if self.timecount <= 0:
+                self.game_end()
+                
+    def goto_next_mode(self):
+        next_scenes = {
+            GameMode.TITLE: scenes.SceneTitle,
+            GameMode.STAGE: scenes.SceneStageSelect,
+            GameMode.MAIN: main.SceneMain,
+            GameMode.END: scenes.SceneEnd,
+        }
+        self.mode = self.next_mode
+        self.scene = (next_scenes[self.next_mode])(self.next_param)
+        self.next_mode = None
+        self.next_param = None
+
+    def is_gaming(self):
+        return self.mode == GameMode.STAGE or self.mode == GameMode.MAIN
+
     def draw(self):
-        pass
+        pyxel.cls(0)
+        self.scene.draw()
 
-    def removeFromParent(self):
-        if self.parent is None:
-            return
-        
-        self.parent.children.remove(self)
-        self.parent = None
+        if self.is_gaming():
+            t = "TIME: %02d:%02d.%03d  SCORE:%03d" % (int(self.timecount/60/1000), 
+                int(self.timecount/1000)%60,
+                self.timecount%1000,
+                self.score)
+            pyxel.text(10,3, t, 7)
 
-class GContainer(GObject):
-    def __init__(self):
-        super().__init__()
-        self.children = []
-    
-    def update(self):
-        for child in self.children[:]:
-            child.update()
-    
-    def draw(self):
-        for child in self.children[:]:
-            child.draw()
+    def move_scene(self, next_mode, next_param):
+        self.next_mode = next_mode
+        self.next_param = next_param
 
-    def addChild(self, child):
-        assert child.parent is None
+    def game_start(self):
+        self.coins = 0
+        self.score = 0
+        self.stages = [False] * STAGE_NUM
+        self.timecount = 1000*GAME_TIMEOUT_S
 
-        child.parent = self
-        self.children.append(child)
+        self.move_scene(GameMode.STAGE, {})
 
-class Scene:
-    def __init__(self):
-        pass
-    
-    def update(self):
-        pass
-    
-    def draw(self):
-        pass
+    def game_end(self):
+        self.move_scene(GameMode.END, {})
+
+    def stage_start(self, stage):
+        self.coins = 0
+        self.stage = stage
+        self.move_scene(GameMode.MAIN, {"stage": stage})
+
+    def stage_end(self):
+        self.score += (self.coins+5)
+        self.coins = 0
+        self.stages[self.stage] = True
+        self.move_scene(GameMode.STAGE, {})
+
+
+    def get_coin(self):
+        self.coins += 1
+
+
+game = None
+def game_main():
+    global game
+    game = Game()
+    game.run()
