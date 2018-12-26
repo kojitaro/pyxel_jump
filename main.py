@@ -16,7 +16,9 @@ class Player():
         self.hit = False
 
         self.body = world.CreateDynamicBody(position=self.first_pos, angle=0)
-        self.body.CreateCircleFixture(radius=0.45, density=1, friction=0.3)
+        self.body.CreateCircleFixture(radius=0.45, density=1, friction=0.0)
+        # self.body.SetFixedRotation(True)
+        # self.body.CreateFixture(shape=b2.polygonShape(box=(0.5, 0.5)), density=1, friction=0.3)
 
     def update(self):
         x = 0
@@ -56,8 +58,7 @@ class Player():
         g.draw_body_sprite(self.body, g.SpriteSet.PLAYER.value+int(self.walk_counter/4)%2)
 
 class GroundGenerator:
-    def __init__(self, a):
-        random.seed(a)
+    def __init__(self):
         self.w = g.STAGE_ITEMEND_X_M-g.PLAYER_SCROLL_X_M-2
         self.h = g.SCREEN_HIGHT_M
         self.items = [False] * (self.w*self.h)
@@ -139,9 +140,10 @@ class Ground():
 class SceneMain():
     def __init__(self, params):
         self.params = params
-        generator = GroundGenerator(params["stage"])
+        random.seed(params["stage"])
+        generator = GroundGenerator()
 
-        self.world = b2.world(gravity=(0, -10), doSleep=True)
+        self.world = b2.world(gravity=(0, -5-random.random()*5), doSleep=True)
         self.player = Player(self.world)
         self.ground = Ground(self.world, generator)
 
@@ -161,7 +163,7 @@ class SceneMain():
         t = "  STAGE:%02d COIN:%02d" %(self.params["stage"]+1, g.game.coins)
         pyxel.text(10,10, t, 7)
 
-        t = "X: Jump   R: Retire"
+        t = "X: JUMP   R: RETIRE"
         pyxel.text(g.SCREEN_WIDTH - len(t)*5, g.SCREEN_HEIGHT-8, t, 7)
 
 if __name__ == "__main__":
